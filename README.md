@@ -6,7 +6,7 @@ Elasticsearch checker for nagios and icinga
 
 Dependencies
 -------------
-* pip install elasticsearch
+* pip install PySock urllib3 elasticsearch 
 
 ----------
 
