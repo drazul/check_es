@@ -5,6 +5,7 @@ import requests
 import sys
 from elasticsearch import Elasticsearch
 
+
 class Checker:
     def __init__(self, args):
         self.args = args
@@ -28,7 +29,7 @@ class Checker:
         self.nagios_output(status_code, message)
 
     def nagios_output(self, status_code, message):
-        pretty_status_code = {0:'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOW'}
+        pretty_status_code = {0: 'OK', 1: 'WARNING', 2: 'CRITICAL', 3: 'UNKNOW'}
 
         pretty_output = '%(status_code)s - %(message)s' % {'status_code': pretty_status_code[status_code], 'message': message}
 
@@ -40,11 +41,10 @@ class Checker:
         status_code = self.check_limits(json_result['status'])
         return (status_code, json_result)
 
-
     def perform_search(self):
         output = []
 
-        json_data = self.elasticsearch.search(index = args.index, body = args.query)
+        json_data = self.elasticsearch.search(index=args.index, body=' '.join(args.query))
 
         if self.fields_to_be_returned:
             for element in json_data['hits']['hits']:
@@ -73,7 +73,7 @@ class Checker:
         status_code = self.check_limits(number_of_entries)
 
         data_to_track = "counter=%(number_of_entries)s;%(warning)s;%(critical)s;0" % {'number_of_entries': number_of_entries, 'warning': self.args.warning, 'critical': self.args.critical}
-        message = "%(number_of_entries)s elements found.\n%(json_result)s\n|%(data_to_track)s" % {'number_of_entries': number_of_entries, 'json_result': json_result, 'data_to_track': data_to_track} 
+        message = "%(number_of_entries)s elements found.\n%(json_result)s\n|%(data_to_track)s" % {'number_of_entries': number_of_entries, 'json_result': json_result, 'data_to_track': data_to_track}
 
         return (status_code, message)
 
@@ -88,7 +88,7 @@ class Checker:
             return self.__check_limits_strings(value_to_check)
 
     def __check_limits_strings(self, value_to_check):
-        if value_to_check == None:
+        if value_to_check is None:
             return 3
         if self.args.critical and value_to_check == self.args.critical:
             return 2
@@ -97,7 +97,7 @@ class Checker:
         return 0
 
     def __check_limits_numbers(self, value_to_check):
-        if value_to_check == None:
+        if value_to_check is None:
             return 3
         if self.args.critical and int(value_to_check) >= int(self.args.critical):
             return 2
@@ -106,24 +106,22 @@ class Checker:
         return 0
 
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description =  'Return result of a elasticsearch query with nagios format')
+    parser = argparse.ArgumentParser(description='Return result of a elasticsearch query with nagios format')
 
-    parser.add_argument('--host', help = 'ip or cname of elasticsearch endpoint', type = str, default = 'localhost')
-    parser.add_argument('--port', help = 'port of elasticsearch', type = int, default = 9200)
-    parser.add_argument('--hostname', help = 'host:port of elasticsearch', type = int, default = None)
+    parser.add_argument('--host', help='ip or cname of elasticsearch endpoint', type=str, default='localhost')
+    parser.add_argument('--port', help='port of elasticsearch', type=int, default=9200)
+    parser.add_argument('--hostname', help='host:port of elasticsearch', type=int, default=None)
 
-    parser.add_argument('--mode', choices = ['search', 'cluster-health'], help = 'operation mode', type = str, default = 'search')
-    parser.add_argument('--query', help = '(only in searchs) json string with elasticsearch query', type = str, default = '{}')
-    parser.add_argument('--index', help = '(only in searchs) index where apply query', type = str, default = '*')
+    parser.add_argument('--mode', choices=['search', 'cluster-health'], help='operation mode', type=str, default='search')
+    parser.add_argument('--query', help='(only in searchs) json string with elasticsearch query', type=str, default='{}', nargs='+')
+    parser.add_argument('--index', help='(only in searchs) index where apply query', type=str, default='*')
 
-    parser.add_argument('-w', '--warning', help = 'number of entries neededed to throw a warning', type = str, default = None)
-    parser.add_argument('-c', '--critical', help = 'number of entries neededed to throw a critical', type = str, default = None)
-    parser.add_argument('--fields-to-be-returned', help = '(only in searchs) fields to be returned, separated by ,', type = str, default = None)
-    parser.add_argument('--fields-to-be-deleted', help = '(only in searchs) fields to be deleted on return, separated by ,', type = str, default = None)
+    parser.add_argument('-w', '--warning', help='number of entries neededed to throw a warning', type=str, default=None)
+    parser.add_argument('-c', '--critical', help='number of entries neededed to throw a critical', type=str, default=None)
+    parser.add_argument('--fields-to-be-returned', help='(only in searchs) fields to be returned, separated by ,', type=str, default=None)
+    parser.add_argument('--fields-to-be-deleted', help='(only in searchs) fields to be deleted on return, separated by ,', type=str, default=None)
 
     args = parser.parse_args()
 
     Checker(args).perform_check()
-    
