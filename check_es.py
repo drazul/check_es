@@ -144,8 +144,8 @@ if __name__ == '__main__':
     parser.add_argument('--query', help='[search mode] JSON string with elasticsearch query', type=str, default='{}', nargs='+')
     parser.add_argument('--index', help='[search mode] index name to query', type=str, default='*')
 
-    parser.add_argument('-w', '--warning', help='number of entries needed to throw a WARNING', type=int, default=None)
-    parser.add_argument('-c', '--critical', help='number of entries needed to throw a CRITICAL', type=int, default=None)
+    parser.add_argument('-w', '--warning', help='number of entries needed to throw a WARNING', type=str, default=None)
+    parser.add_argument('-c', '--critical', help='number of entries needed to throw a CRITICAL', type=str, default=None)
     parser.add_argument('-e', '--error-return-status', help=('status to return on connection or index error:'
                         ' 0 - OK, 1 - WARNING, 2 - CRITICAL, 3 - UNKNOWN'), type=int, default=3)
     parser.add_argument('--fields-to-be-returned', help='[search mode] fields to return (separated by ",")', type=str, default=None)
