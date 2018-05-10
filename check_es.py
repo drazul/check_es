@@ -145,9 +145,9 @@ class Checker:
         for index_name in indices:
             data.update(self._get_data_from_index_stats(index_name, indices[index_name]))
 
-        graphite_output = "| "
+        graphite_output = "|"
         for index_name in data:
-            graphite_output += "%s=%s;;;" % (index_name, data[index_name])
+            graphite_output += " %s=%s;;;" % (index_name, data[index_name])
         return (0, graphite_output)
 
     def _get_data_from_node_stats(self, node_stats):
@@ -164,9 +164,9 @@ class Checker:
         for node_hash in json_result['nodes']:
             nodes.update(self._get_data_from_node_stats(json_result['nodes'][node_hash]))
 
-        graphite_output = "| "
+        graphite_output = "|"
         for node_name in nodes:
-            graphite_output += "%s=%s;;;" % (node_name, nodes[node_name])
+            graphite_output += " %s=%s;;;" % (node_name, nodes[node_name])
 
         return (0, graphite_output)
 
