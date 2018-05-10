@@ -17,6 +17,7 @@ class Checker:
         self.warning = args.warning
         self.critical = args.critical
         self.mode = args.mode
+        self.calculate_delta_stats = args.calculate_average_since_last_check
 
         if args.hostname:
             self.hostname, self.port = args.hostname.split(':')
@@ -96,7 +97,50 @@ class Checker:
         else:
             result['index.%s.search.average_latency_in_millis' % sanitized_index_name] = 0
 
+        if self.calculate_delta_stats:
+            result = self._calculate_delta_stats(sanitized_index_name, result)
+
         return result
+
+    def _get_last_stats(self):
+        stats = None
+        try:
+            with open('/tmp/last-stats.json') as f:
+                stats = json.load(f)
+        except:
+            print('Not found last stats. Skipping')
+        return stats
+
+    def _save_current_stats(self, last_stats, current_stats):
+        stats_to_update = current_stats.copy()
+        if last_stats:
+            for stat_name in last_stats:
+                if stat_name not in current_stats:
+                    stats_to_update[stat_name] = last_stats[stat_name]
+
+        with open('/tmp/last-stats.json', 'w') as f:
+            json.dump(stats_to_update, f)
+
+    def _calculate_delta_stats(self, index_name, current_stats):
+        last_stats = self._get_last_stats()
+        self._save_current_stats(last_stats, current_stats)
+
+        merged = current_stats.copy()
+        if last_stats:
+            for stat_name in current_stats:
+                if stat_name in last_stats:
+                    delta_index_name = '%s_delta' % stat_name
+                    merged[delta_index_name] = current_stats[stat_name] - last_stats[stat_name]
+            if ('index.%s.search.total_delta' % index_name in merged and
+                merged['index.%s.search.total_delta' % index_name] != 0):
+                merged['index.%s.search.average_latency_in_millis_delta' % index_name] = (
+                    merged['index.%s.search.time_in_millis_delta' % index_name] /
+                    merged['index.%s.search.total_delta' % index_name]
+                )
+            else:
+                merged['index.%s.search.average_latency_in_millis_delta' % index_name] = 0
+
+        return merged
 
     def _merge_dict(self, d1, d2):
         if isinstance(d1, dict):
@@ -270,6 +314,8 @@ if __name__ == '__main__':
                         ' 0 - OK, 1 - WARNING, 2 - CRITICAL, 3 - UNKNOWN'), type=int, default=3)
     parser.add_argument('--fields-to-be-returned', help='[search mode] fields to return (separated by ",")', type=str, default=None)
     parser.add_argument('--fields-to-be-deleted', help='[search mode] fields to delete from return output (separated by ",")', type=str, default=None)
+
+    parser.add_argument('--calculate-average-since-last-check', help='[indices-stats mode] Elasticsearch provide latency info from the begining of the time, but with this flag this program calculate average data with the differences between each check' , action='store_true')
 
     args = parser.parse_args()
 
